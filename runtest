@@ -1,0 +1,69 @@
+#!/bin/sh
+dev=${1:-/dev/sda}
+dst=/mnt
+
+dostat()
+{
+	result=`stat -c "%u:%g" "$dst/$1"`
+}
+
+set -e
+set -x
+
+test -d $dst || mkdir $dst
+
+echo 1...
+mount $dev $dst
+rm -f $dst/testfile $dst/testfile1 $dst/testfile2 $dst/testfile3 $dst/testfile4
+#
+touch $dst/testfile
+dostat testfile
+test "$result" = 0:0
+umount $dst
+
+echo 2...
+mount -o uid=77 $dev $dst
+dostat testfile
+test "$result" = 77:0
+touch $dst/testfile1
+dostat testfile1
+test "$result" = 0:0
+umount $dst
+
+echo 3...
+mount $dev $dst
+dostat testfile
+test "$result" = 0:0
+dostat testfile1
+test "$result" = 77:0
+umount $dst
+
+echo 4...
+mount -o uid=77:66 $dev $dst
+touch $dst/testfile2
+dostat testfile2
+test "$result" = 0:0
+umount $dst
+
+echo 5...
+mount $dev $dst
+dostat testfile2
+test "$result" = 66:0
+umount $dst
+
+echo 6...
+mount -o gid=77:66 $dev $dst
+touch $dst/testfile3
+dostat testfile3
+test "$result" = 0:0
+umount $dst
+
+echo 7...
+mount $dev $dst
+dostat testfile
+test "$result" = 0:0
+dostat testfile3
+test "$result" = 0:66
+umount $dst
+
+echo "done"

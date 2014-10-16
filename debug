@@ -1,0 +1,3 @@
+#!/bin/sh
+set -x
+mount -t debugfs -o mode=700,blah=blub debugfs /sys/kernel/debug

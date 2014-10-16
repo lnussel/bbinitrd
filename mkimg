@@ -1,0 +1,13 @@
+#!/bin/bash
+set -e
+test -w / || exit 1
+for fs in ext2 ext3 ext4; do
+	echo $fs ...
+	rm -f img_$fs
+	dd if=/dev/zero of=img_$fs bs=1M count=0 seek=30
+	mkfs.$fs -q -F img_$fs
+	mount img_$fs /mnt
+	rsync -a --no-o --no-g root/ /mnt/
+	umount /mnt
+	chown $SUDO_USER img_$fs
+done
